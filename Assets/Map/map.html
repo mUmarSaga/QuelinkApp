@@ -155,8 +155,13 @@ map.on('click', (e) => {
 
 // ---- Functions called from C# via ExecuteScriptAsync ----
 
-function setZones(json) {
-  currentZones = JSON.parse(json);
+function setZones(zones) {
+  // C# embeds the JSON text directly as a JS array/object literal in the ExecuteScriptAsync call
+  // (e.g. "setZones([{...}])"), so by the time this function runs, `zones` is already a real JS
+  // array — NOT a string. Calling JSON.parse on it would throw (arrays stringify to
+  // "[object Object]", which isn't valid JSON), silently swallowed by the C# side's catch-all,
+  // which is why nothing ever rendered.
+  currentZones = zones;
   render();
 }
 
