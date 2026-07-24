@@ -10,9 +10,10 @@
       "BoxTech.Queclink.Configurator/1.0.0": {
         "dependencies": {
           "CommunityToolkit.Mvvm": "8.4.2",
+          "Microsoft.Web.WebView2": "1.0.4078.44",
           "Microsoft.WindowsAppSDK": "2.2.0",
           "System.IO.Ports": "10.0.9",
-          "Microsoft.Web.WebView2.Core.Projection": "1.0.3719.77",
+          "Microsoft.Web.WebView2.Core.Projection": "1.0.4078.44",
           "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.19041.57"
         },
         "runtime": {
@@ -40,10 +41,10 @@
           }
         }
       },
-      "Microsoft.Web.WebView2/1.0.3719.77": {
+      "Microsoft.Web.WebView2/1.0.4078.44": {
         "native": {
           "runtimes/win-x64/native/WebView2Loader.dll": {
-            "fileVersion": "1.0.3719.77",
+            "fileVersion": "1.0.4078.44",
             "localPath": "WebView2Loader.dll"
           }
         }
@@ -269,7 +270,7 @@
       },
       "Microsoft.WindowsAppSDK.WinUI/2.2.1": {
         "dependencies": {
-          "Microsoft.Web.WebView2": "1.0.3719.77",
+          "Microsoft.Web.WebView2": "1.0.4078.44",
           "Microsoft.WindowsAppSDK.Foundation": "2.1.0",
           "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.15"
         },
@@ -299,11 +300,11 @@
           }
         }
       },
-      "Microsoft.Web.WebView2.Core.Projection/1.0.3719.77": {
+      "Microsoft.Web.WebView2.Core.Projection/1.0.4078.44": {
         "runtime": {
           "Microsoft.Web.WebView2.Core.Projection.dll": {
-            "assemblyVersion": "1.0.3719.77",
-            "fileVersion": "1.0.3719.77"
+            "assemblyVersion": "1.0.4078.44",
+            "fileVersion": "1.0.4078.44"
           }
         }
       }
@@ -327,12 +328,12 @@
       "path": "communitytoolkit.mvvm/8.4.2",
       "hashPath": "communitytoolkit.mvvm.8.4.2.nupkg.sha512"
     },
-    "Microsoft.Web.WebView2/1.0.3719.77": {
+    "Microsoft.Web.WebView2/1.0.4078.44": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA==",
-      "path": "microsoft.web.webview2/1.0.3719.77",
-      "hashPath": "microsoft.web.webview2.1.0.3719.77.nupkg.sha512"
+      "sha512": "sha512-TQkHa/aOHUqFHnJIJ/2ZmJ4nLcQJi0Pc0rj9BAs7SP5sT/KtVtb8jFp9uqQL6cKzCRSrwjS/wEPA43NWUOzU+A==",
+      "path": "microsoft.web.webview2/1.0.4078.44",
+      "hashPath": "microsoft.web.webview2.1.0.4078.44.nupkg.sha512"
     },
     "Microsoft.Windows.AI.MachineLearning/2.1.70": {
       "type": "package",
@@ -404,7 +405,7 @@
       "path": "system.numerics.tensors/9.0.0",
       "hashPath": "system.numerics.tensors.9.0.0.nupkg.sha512"
     },
-    "Microsoft.Web.WebView2.Core.Projection/1.0.3719.77": {
+    "Microsoft.Web.WebView2.Core.Projection/1.0.4078.44": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""

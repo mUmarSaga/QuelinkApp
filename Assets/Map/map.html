@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://appassets.local/leaflet/leaflet.css" />
+<style>
+  html, body, #map { height: 100%; margin: 0; padding: 0; }
+  .zone-label {
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font: 11px sans-serif;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://appassets.local/leaflet/leaflet.js"></script>
+<script>
+// GEO (circle) fences render blue, PEO (polygon) fences render orange — the one hard
+// requirement for this map: the two shapes must always be visually distinguishable by color.
+const CIRCLE_COLOR = "#2196F3";
+const POLYGON_COLOR = "#FF9800";
+const SELECTED_WEIGHT = 3;
+const DIMMED_WEIGHT = 1;
+const SELECTED_OPACITY = 0.85;
+const DIMMED_OPACITY = 0.35;
+
+// A single, non-repeating world: without these three options Leaflet tiles the world
+// side-by-side infinitely as you pan/zoom out, which reads as a broken/duplicated map.
+const map = L.map('map', {
+  worldCopyJump: false,
+  maxBounds: [[-90, -180], [90, 180]],
+  maxBoundsViscosity: 1.0
+}).setView([20, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  noWrap: true,
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const overlayLayer = L.layerGroup().addTo(map);
+const centerMarkerLayer = L.layerGroup().addTo(map);
+const vertexMarkerLayer = L.layerGroup().addTo(map);
+
+let editMode = "none";     // "none" | "circle" | "polygon"
+let activeVertexIndex = -1;
+let selectedShape = -1;    // 1 = circle, 2 = polygon — circles and polygons are independent
+let selectedIndex = -1;    // 20-zone tables, so a selection needs both to be unambiguous
+let currentZones = [];
+
+function post(msg) {
+  if (window.chrome && window.chrome.webview) {
+    window.chrome.webview.postMessage(JSON.stringify(msg));
+  }
+}
+
+function makeCenterMarker(lat, lng, draggable, onDrag) {
+  const marker = L.marker([lat, lng], { draggable: draggable });
+  if (draggable) {
+    marker.on('dragend', () => {
+      const p = marker.getLatLng();
+      onDrag(p.lat, p.lng);
+    });
+  }
+  return marker;
+}
+
+function makeVertexMarker(lat, lng, draggable, onDrag) {
+  // Plain circleMarker has no native drag support, so a divIcon marker is used instead.
+  const dragMarker = L.marker([lat, lng], {
+    draggable: draggable,
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="width:12px;height:12px;border-radius:50%;background:' + POLYGON_COLOR + ';border:2px solid #000;"></div>',
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    })
+  });
+  if (draggable) {
+    dragMarker.on('dragend', () => {
+      const p = dragMarker.getLatLng();
+      onDrag(p.lat, p.lng);
+    });
+  }
+  return dragMarker;
+}
+
+function render() {
+  overlayLayer.clearLayers();
+  centerMarkerLayer.clearLayers();
+  vertexMarkerLayer.clearLayers();
+
+  currentZones.forEach(zone => {
+    const isSelected = zone.shape === selectedShape && zone.index === selectedIndex;
+    const weight = isSelected ? SELECTED_WEIGHT : DIMMED_WEIGHT;
+    const opacity = isSelected ? SELECTED_OPACITY : DIMMED_OPACITY;
+
+    if (zone.shape === 1) {
+      // Circle (GEO) — rendered as soon as the zone is enabled, even at the default (0,0)
+      // "not yet placed" position, so a newly-enabled zone is never silently invisible.
+      const circle = L.circle([zone.latitude, zone.longitude], {
+        radius: zone.radius || 50,
+        color: CIRCLE_COLOR,
+        weight: weight,
+        fillColor: CIRCLE_COLOR,
+        fillOpacity: opacity * 0.3,
+        opacity: opacity
+      }).bindTooltip("Zone " + zone.index + " (Circle)", { className: 'zone-label', permanent: false });
+      overlayLayer.addLayer(circle);
+
+      if (isSelected) {
+        const marker = makeCenterMarker(zone.latitude, zone.longitude, true, (lat, lng) => {
+          post({ type: "circleCenter", index: zone.index, lat: lat, lng: lng });
+        });
+        centerMarkerLayer.addLayer(marker);
+      }
+    } else if (zone.shape === 2) {
+      // Polygon (PEO) — same "always visible once enabled" reasoning as circles above.
+      const pts = zone.vertices || [];
+      if (pts.length >= 2) {
+        const latlngs = pts.map(v => [v.latitude, v.longitude]);
+        const polygon = L.polygon(latlngs, {
+          color: POLYGON_COLOR,
+          weight: weight,
+          fillColor: POLYGON_COLOR,
+          fillOpacity: opacity * 0.3,
+          opacity: opacity
+        }).bindTooltip("Zone " + zone.index + " (Polygon)", { className: 'zone-label', permanent: false });
+        overlayLayer.addLayer(polygon);
+      }
+      if (isSelected) {
+        (zone.vertices || []).forEach((v, i) => {
+          const marker = makeVertexMarker(v.latitude, v.longitude, true, (lat, lng) => {
+            post({ type: "vertexSet", index: zone.index, vertexIndex: i, lat: lat, lng: lng });
+          });
+          vertexMarkerLayer.addLayer(marker);
+        });
+      }
+    }
+  });
+}
+
+map.on('click', (e) => {
+  if (selectedIndex < 0) return;
+  if (editMode === "circle") {
+    post({ type: "circleCenter", index: selectedIndex, lat: e.latlng.lat, lng: e.latlng.lng });
+  } else if (editMode === "polygon" && activeVertexIndex >= 0) {
+    post({ type: "vertexSet", index: selectedIndex, vertexIndex: activeVertexIndex, lat: e.latlng.lat, lng: e.latlng.lng });
+  }
+});
+
+// ---- Functions called from C# via ExecuteScriptAsync ----
+
+function setZones(json) {
+  currentZones = JSON.parse(json);
+  render();
+}
+
+function setSelection(shape, index, mode, activeVertex) {
+  selectedShape = shape;
+  selectedIndex = index;
+  editMode = mode;
+  activeVertexIndex = typeof activeVertex === "number" ? activeVertex : -1;
+  render();
+}
+
+function focusZone(lat, lng, zoom) {
+  map.setView([lat, lng], zoom || 14);
+}
+</script>
+</body>
+</html>
